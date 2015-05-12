@@ -12,6 +12,9 @@
 (setq-default indent-tabs-mode nil)
 
 
+;; ido mode
+(ido-mode)
+
 ;; line number
 (global-linum-mode t)
 (setq linum-format "%3d ")
@@ -68,3 +71,7 @@
 
 ;; jedi
 (add-hook 'python-mode-hook 'jedi:setup)
+
+
+;; flycheck
+(global-flycheck-mode)
