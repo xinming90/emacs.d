@@ -1,13 +1,27 @@
-;; 
+;;
+;; emacs
+;;
+
+
+;;
 (defalias 'yes-or-no-p 'y-or-n-p)
+(global-hl-line-mode 1)
+(set-face-background hl-line-face "color-240")
+(menu-bar-mode 0)
+; table to space
+(setq-default indent-tabs-mode nil)
+
 
 ;; line number
 (global-linum-mode t)
 (setq linum-format "%3d ")
+(setq line-number-mode t)
+(setq column-number-mode t)
+(setq size-indication-mode t)
 
-;; 
-(global-hl-line-mode 1)
-(set-face-background hl-line-face "color-254")
+;; time
+(setq display-time-day-and-date t)
+(display-time)
 
 
 ;; gdb
@@ -27,6 +41,16 @@
     (package-initialize))
 
 
+;; theme zenburn
+(load-theme 'zenburn t)
+
+
+;; powerline
+(powerline-default-theme)
+(setq powerline-utf-8-separator-left 9654)
+(setq powerline-utf-8-separator-right 9664)
+
+
 ;; smex
 (smex-initialize)
 (global-set-key (kbd "M-x") 'smex)
@@ -36,6 +60,11 @@
 
 
 ;; magit
-(global-set-key [f5] 'magit-diff-unstaged)
-(global-set-key (kbd "S-<f5>") 'magit-diff-staged)
-(setq magit-auto-revert-mode nil)
+(global-set-key (kbd "<f5> <f5>") 'magit-log)
+(global-set-key (kbd "<f5> <f6>") 'magit-file-log)
+(global-set-key (kbd "<f5> <f7>") 'magit-diff-unstaged)
+(global-set-key (kbd "<f5> <f8>") 'magit-diff-staged)
+
+
+;; jedi
+(add-hook 'python-mode-hook 'jedi:setup)
