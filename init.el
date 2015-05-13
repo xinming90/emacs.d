@@ -15,12 +15,42 @@
 ;; ido mode
 (ido-mode)
 
+
+;; paren
+(show-paren-mode t)
+
+
+;; electric-pair-mode
+(electric-pair-mode t)
+
+
+;;
+;(desktop-save-mode t)
+
+
+;; ediff
+(setq ediff-split-window-function 'split-window-horizontally)
+(global-set-key (kbd "C-c d") 'vc-ediff)
+
+
+;;
+;(set-face-attribute 'vertical-border
+;                   nil
+;                   :foreground "#282a2e")
+
+
 ;; line number
 (global-linum-mode t)
-(setq linum-format "%3d ")
+(setq linum-format "%4d ")
 (setq line-number-mode t)
 (setq column-number-mode t)
 (setq size-indication-mode t)
+
+; https://github.com/viseztrance/.emacs.d/blob/master/config/user-interface-setup.el
+(set-face-attribute 'linum nil
+                    :foreground "#ccc"
+                    :background "#444")
+
 
 ;; time
 (setq display-time-day-and-date t)
@@ -63,10 +93,11 @@
 
 
 ;; magit
-(global-set-key (kbd "<f5> <f5>") 'magit-log)
-(global-set-key (kbd "<f5> <f6>") 'magit-file-log)
-(global-set-key (kbd "<f5> <f7>") 'magit-diff-unstaged)
-(global-set-key (kbd "<f5> <f8>") 'magit-diff-staged)
+(global-set-key (kbd "C-c g s") 'magit-status)
+(global-set-key (kbd "C-c g l") 'magit-log)
+(global-set-key (kbd "C-c g f") 'magit-file-log)
+(global-set-key (kbd "C-c g d u") 'magit-diff-unstaged)
+(global-set-key (kbd "C-c g d s") 'magit-diff-staged)
 
 
 ;; jedi
@@ -74,4 +105,16 @@
 
 
 ;; flycheck
-(global-flycheck-mode)
+(add-hook 'python-mode-hook 'flycheck-mode)
+
+
+;; window-numbering
+(window-numbering-mode)
+
+
+;; git-gutter
+(global-git-gutter-mode t)
+
+;; Jump to next/previous hunk
+(global-set-key (kbd "C-x p") 'git-gutter:previous-hunk)
+(global-set-key (kbd "C-x n") 'git-gutter:next-hunk)
