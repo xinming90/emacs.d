@@ -118,3 +118,11 @@
 ;; Jump to next/previous hunk
 (global-set-key (kbd "C-x p") 'git-gutter:previous-hunk)
 (global-set-key (kbd "C-x n") 'git-gutter:next-hunk)
+
+
+;; anzu
+(global-anzu-mode)
+
+
+;; flx-ido
+(flx-ido-mode)
