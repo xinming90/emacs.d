@@ -107,6 +107,12 @@
 ;; jedi
 (add-hook 'python-mode-hook 'jedi:setup)
 
+;; http://txt.arboreus.com/2013/02/21/jedi.el-jump-to-definition-and-back.html
+(add-hook 'python-mode-hook
+          '(lambda()
+             (local-set-key (kbd "C-[ [ ,") 'jedi:goto-definition)
+             (local-set-key (kbd "C-[ [ .") 'jedi:goto-definition-pop-marker)))
+
 
 ;; flycheck
 (add-hook 'python-mode-hook 'flycheck-mode)
@@ -155,3 +161,32 @@
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
  )
+
+
+;;
+;(global-set-key (kbd "<f12>") 'ecb-activate)
+
+
+
+;; Enable helm-gtags-mode
+(add-hook 'c-mode-hook 'helm-gtags-mode)
+(add-hook 'c++-mode-hook 'helm-gtags-mode)
+(add-hook 'asm-mode-hook 'helm-gtags-mode)
+
+
+;; Set key bindings
+; http://superuser.com/questions/731427/how-do-i-send-ctrl-in-iterm2
+(eval-after-load "helm-gtags"
+  '(progn
+     (define-key helm-gtags-mode-map (kbd "C-[ [ ,") 'helm-gtags-find-tag-from-here)
+     (define-key helm-gtags-mode-map (kbd "C-[ [ .") 'helm-gtags-previous-history)))
+
+
+
+;; auto-highlight-symbol
+(global-auto-highlight-symbol-mode)
+
+
+;; cython-mode
+; for gevent
+(add-to-list 'auto-mode-alist '("\\.ppyx\\'" . cython-mode))
