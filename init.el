@@ -57,6 +57,14 @@
 (display-time)
 
 
+;; c/c++
+(add-hook 'c-mode-hook 'auto-complete-mode)
+(add-hook 'c++-mode-hook 'auto-complete-mode)
+
+;; c 
+(setq-default c-basic-offset 4)
+
+
 ;; gdb
 (setq gdb-many-windows t)
 (global-set-key [f6] 'gdb)
@@ -138,15 +146,6 @@
 (flx-ido-mode)
 
 
-;; highlight-symbol
-;(add-hook 'python-mode-hook 'highlight-symbol-mode)
-
-
-
-
-;; c 
-(setq-default c-basic-offset 4)
-
 
 ;; ecb
 (custom-set-variables
@@ -162,10 +161,8 @@
  ;; If there is more than one, they won't work right.
  )
 
-
 ;;
 ;(global-set-key (kbd "<f12>") 'ecb-activate)
-
 
 
 ;; Enable helm-gtags-mode
@@ -180,7 +177,6 @@
   '(progn
      (define-key helm-gtags-mode-map (kbd "C-[ [ ,") 'helm-gtags-find-tag-from-here)
      (define-key helm-gtags-mode-map (kbd "C-[ [ .") 'helm-gtags-previous-history)))
-
 
 
 ;; auto-highlight-symbol
