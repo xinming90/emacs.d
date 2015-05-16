@@ -186,3 +186,11 @@
 ;; cython-mode
 ; for gevent
 (add-to-list 'auto-mode-alist '("\\.ppyx\\'" . cython-mode))
+
+
+;; fill-column-indicator
+(add-hook 'python-mode-hook 'fci-mode)
+(setq fci-rule-column 80)
+(setq fci-rule-width 1)
+(setq fci-rule-color "color-240")
+(setq fci-rule-character 10006)
