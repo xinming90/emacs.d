@@ -178,6 +178,10 @@
      (define-key helm-gtags-mode-map (kbd "C-[ [ ,") 'helm-gtags-find-tag-from-here)
      (define-key helm-gtags-mode-map (kbd "C-[ [ .") 'helm-gtags-previous-history)))
 
+;; auto-update gtags
+(setq helm-gtags-auto-update t)
+(setq helm-gtags-update-interval-second nil)
+
 
 ;; auto-highlight-symbol
 (global-auto-highlight-symbol-mode)
@@ -194,3 +198,10 @@
 (setq fci-rule-width 1)
 (setq fci-rule-color "color-240")
 (setq fci-rule-character 10006)
+
+
+;; multi-term
+(add-hook 'term-mode-hook
+          (lambda()
+            (delete '("C-n" . next-line) term-bind-key-alist)
+            (delete '("C-p" . previous-line) term-bind-key-alist)))
