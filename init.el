@@ -12,6 +12,10 @@
 (setq-default indent-tabs-mode nil)
 
 
+;; split window
+(global-set-key (kbd "C-x v") 'split-window-right)
+
+
 ;; ido mode
 (ido-mode)
 
