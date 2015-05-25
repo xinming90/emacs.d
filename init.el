@@ -14,6 +14,7 @@
 
 ;; split window
 (global-set-key (kbd "C-x v") 'split-window-right)
+(global-set-key (kbd "C-x s") 'split-window-below)
 
 
 ;; ido mode
