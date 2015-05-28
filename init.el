@@ -226,3 +226,14 @@
           (lambda()
             (delete '("C-n" . next-line) term-bind-key-alist)
             (delete '("C-p" . previous-line) term-bind-key-alist)))
+
+
+;; web-mode
+(defun my-web-mode-hook ()
+  "Hooks for Web mode."
+  (setq web-mode-markup-indent-offset 2)
+  (setq web-mode-enable-auto-closing t)
+  (setq web-mode-auto-close-style 2))
+  
+(add-hook 'html-mode-hook 'web-mode)
+(add-hook 'web-mode-hook 'my-web-mode-hook)
