@@ -78,6 +78,18 @@
 (global-set-key (kbd "C-[ [ ;") 'comment-dwim-line)
 
 
+;; python
+(defun my-python-mode-hook ()
+  (hs-minor-mode)
+  (define-key hs-minor-mode-map (kbd "C-c h") 'hs-hide-all)
+  (define-key hs-minor-mode-map (kbd "C-c s") 'hs-show-all)
+  (define-key hs-minor-mode-map (kbd "C-[ [ -") 'hs-hide-block)
+  (define-key hs-minor-mode-map (kbd "C-[ [ +") 'hs-show-block)
+  (view-mode))
+
+(add-hook 'python-mode-hook 'my-python-mode-hook)
+
+
 ;; c/c++
 (add-hook 'c-mode-hook 'auto-complete-mode)
 (add-hook 'c++-mode-hook 'auto-complete-mode)
