@@ -85,7 +85,8 @@
   (define-key hs-minor-mode-map (kbd "C-c s") 'hs-show-all)
   (define-key hs-minor-mode-map (kbd "C-[ [ -") 'hs-hide-block)
   (define-key hs-minor-mode-map (kbd "C-[ [ +") 'hs-show-block)
-  (view-mode))
+  ;;(view-mode)
+)
 
 (add-hook 'python-mode-hook 'my-python-mode-hook)
 
@@ -107,6 +108,13 @@
 
 ;; org-mode
 (setq org-log-done t)
+
+
+;; auto-insert-mode             http://www.emacswiki.org/emacs/AutoInsertMode
+(auto-insert-mode)  ;;; Adds hook to find-files-hook
+(setq auto-insert-directory "~/.emacs.d/templates/") ;;; Or use custom, *NOTE* Trailing slash important
+(setq auto-insert-query nil) ;;; If you don't want to be prompted before insertion
+(define-auto-insert "\.py" "template.py")
 
 
 ;; elpa
