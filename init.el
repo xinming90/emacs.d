@@ -261,3 +261,7 @@
   
 (add-hook 'html-mode-hook 'web-mode)
 (add-hook 'web-mode-hook 'my-web-mode-hook)
+
+
+;; heml-ag
+(global-set-key (kbd "C-x a g") 'helm-do-ag-project-root)
