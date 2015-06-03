@@ -265,3 +265,7 @@
 
 ;; heml-ag
 (global-set-key (kbd "C-x a g") 'helm-do-ag-project-root)
+
+
+;; thrift-mode
+(add-hook 'thrift-mode-hook 'whitespace-mode)
