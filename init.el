@@ -83,12 +83,20 @@
 
 
 ;; python
+
+;; python-compile  https://www.cs.unc.edu/~gb/blog/2008/03/15/running-python-from-within-emacs/
+(defun python-compile ()
+  "Use compile to run python programs"
+  (interactive)
+  (compile (concat (getenv "VIRTUAL_ENV") "/bin/" "python " (buffer-name))))
+
 (defun my-python-mode-hook ()
   (hs-minor-mode)
   (define-key hs-minor-mode-map (kbd "C-c h") 'hs-hide-all)
   (define-key hs-minor-mode-map (kbd "C-c s") 'hs-show-all)
   (define-key hs-minor-mode-map (kbd "C-[ [ -") 'hs-hide-block)
-  (define-key hs-minor-mode-map (kbd "C-[ [ +") 'hs-show-block))
+  (define-key hs-minor-mode-map (kbd "C-[ [ +") 'hs-show-block)
+  (define-key python-mode-map (kbd "C-c C-c") 'python-compile))
 
 (add-hook 'python-mode-hook 'my-python-mode-hook)
 
