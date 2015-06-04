@@ -88,9 +88,7 @@
   (define-key hs-minor-mode-map (kbd "C-c h") 'hs-hide-all)
   (define-key hs-minor-mode-map (kbd "C-c s") 'hs-show-all)
   (define-key hs-minor-mode-map (kbd "C-[ [ -") 'hs-hide-block)
-  (define-key hs-minor-mode-map (kbd "C-[ [ +") 'hs-show-block)
-  ;;(view-mode)
-)
+  (define-key hs-minor-mode-map (kbd "C-[ [ +") 'hs-show-block))
 
 (add-hook 'python-mode-hook 'my-python-mode-hook)
 
@@ -112,6 +110,10 @@
 
 ;; org-mode
 (setq org-log-done t)
+
+
+;; json
+(global-set-key (kbd "C-x j s") 'json-pretty-print-buffer)
 
 
 ;; auto-insert-mode             http://www.emacswiki.org/emacs/AutoInsertMode
