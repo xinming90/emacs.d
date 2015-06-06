@@ -279,3 +279,17 @@
 
 ;; thrift-mode
 (add-hook 'thrift-mode-hook 'whitespace-mode)
+
+
+;; ropemacs
+(defun load-ropemacs ()
+  "Load pymacs and ropemacs"
+  (interactive)
+  (add-to-list 'load-path "~/.emacs.d/Pymacs")
+  (require 'pymacs)
+  (pymacs-load "ropemacs" "rope-")
+  ;; Automatically save project python buffers before refactorings
+  (setq ropemacs-confirm-saving 'nil)
+  (define-key python-mode-map (kbd "C-c r r") 'rope-rename))
+(add-hook 'python-mode-hook 'load-ropemacs)
+
