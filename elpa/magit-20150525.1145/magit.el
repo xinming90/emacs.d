@@ -6270,7 +6270,7 @@ With a prefix argument show the log graph."
                     `(,@(and use-graph (list "--graph"))
                       ,@magit-custom-options
                       "--follow")
-                    (buffer-name)))
+                    (buffer-file-name)))
 
 ;;;###autoload
 (defun magit-reflog (ref)
