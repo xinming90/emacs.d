@@ -162,7 +162,7 @@
 ;; magit
 (global-set-key (kbd "C-c g s") 'magit-status)
 (global-set-key (kbd "C-c g l") 'magit-log)
-(global-set-key (kbd "C-c g f") 'magit-file-log)
+(global-set-key (kbd "C-c g f") 'magit-current-file-log)
 (global-set-key (kbd "C-c g d u") 'magit-diff-unstaged)
 (global-set-key (kbd "C-c g d s") 'magit-diff-staged)
 
@@ -275,7 +275,7 @@
 
 ;; heml-ag
 (global-set-key (kbd "C-x a g") 'helm-do-ag-project-root)
-
+(global-set-key (kbd "C-x a f") 'helm-ag-this-file)
 
 ;; thrift-mode
 (add-hook 'thrift-mode-hook 'whitespace-mode)
@@ -291,5 +291,4 @@
   ;; Automatically save project python buffers before refactorings
   (setq ropemacs-confirm-saving 'nil)
   (define-key python-mode-map (kbd "C-c r r") 'rope-rename))
-(add-hook 'python-mode-hook 'load-ropemacs)
-
+;(add-hook 'python-mode-hook 'load-ropemacs)

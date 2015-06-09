@@ -385,6 +385,12 @@ With a prefix argument show the log graph.
 
 \(fn FILE &optional USE-GRAPH)" t nil)
 
+(autoload 'magit-current-file-log "magit" "\
+Display the log for the currently visited file or another one.
+With a prefix argument show the log graph.
+
+\(fn FILE &optional USE-GRAPH)" t nil)
+
 (autoload 'magit-reflog "magit" "\
 Display the reflog of the current branch.
 With a prefix argument another branch can be chosen.

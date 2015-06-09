@@ -6259,6 +6259,20 @@ With a prefix argument show the log graph."
                     file))
 
 ;;;###autoload
+(defun magit-current-file-log (&optional use-graph)
+  "Display the log for the currently visited file.
+With a prefix argument show the log graph."
+  (interactive)
+  (magit-mode-setup magit-log-buffer-name nil
+                    #'magit-log-mode
+                    #'magit-refresh-log-buffer
+                    'oneline "HEAD"
+                    `(,@(and use-graph (list "--graph"))
+                      ,@magit-custom-options
+                      "--follow")
+                    (buffer-name)))
+
+;;;###autoload
 (defun magit-reflog (ref)
   "Display the reflog of the current branch.
 With a prefix argument another branch can be chosen."
