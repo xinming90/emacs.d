@@ -37,6 +37,14 @@
 ;(desktop-save-mode t)
 
 
+;; http://apple.stackexchange.com/questions/85222/configure-emacs-to-cut-and-copy-text-to-mac-os-x-clipboard
+(defun pbcopy ()
+  (interactive)
+  (call-process-region (point) (mark) "pbcopy")
+  (setq deactivate-mark t))
+(global-set-key (kbd "C-[ c") 'pbcopy)
+
+
 ;; ediff
 (setq ediff-split-window-function 'split-window-horizontally)
 (global-set-key (kbd "C-c d") 'vc-ediff)
