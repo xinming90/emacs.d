@@ -300,3 +300,8 @@
   (setq ropemacs-confirm-saving 'nil)
   (define-key python-mode-map (kbd "C-c r r") 'rope-rename))
 ;(add-hook 'python-mode-hook 'load-ropemacs)
+
+
+;; helm-projectile
+(global-set-key (kbd "C-x f") 'ido-find-file)
+(global-set-key (kbd "C-x C-f") 'helm-projectile-find-file-dwim)
