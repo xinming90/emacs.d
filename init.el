@@ -336,5 +336,5 @@
 
 
 ;; helm-projectile
-(global-set-key (kbd "C-x f") 'ido-find-file)
-(global-set-key (kbd "C-x C-f") 'helm-projectile-find-file-dwim)
+(global-set-key (kbd "C-x C-f") 'ido-find-file)
+(global-set-key (kbd "C-x f") 'helm-projectile-find-file-dwim)
