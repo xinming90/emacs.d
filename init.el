@@ -139,6 +139,39 @@
 (define-auto-insert "\.py" "template.py")
 
 
+;; DB
+; https://truongtx.me/2014/08/23/setup-emacs-as-an-sql-database-client/
+(setq sql-connection-alist
+      '((mysql-server (sql-product 'mysql)
+                      (sql-port 3306)
+                      (sql-server "127.0.0.1")
+                      (sql-user "test")
+                      (sql-password "test")
+                      (sql-database "test"))))
+
+(defun mysql-server ()
+  (interactive)
+  (my-sql-connect 'mysql 'mysql-server))
+
+(defun my-sql-connect (product connection)
+  ;; remember to set the sql-product, otherwise, it will fail for the first time
+  ;; you call the function
+  (setq sql-product product)
+    (sql-connect connection))
+
+(global-set-key (kbd "C-x d") 'mysql-server)
+
+(defun sql-send-line ()
+  "Send the current line to the SQL process."
+  (interactive)
+  (sql-send-region (line-beginning-position) (line-end-position)))
+
+(defun my-sql-mode-hook ()
+  (define-key sql-mode-map (kbd "C-c C-c") 'sql-send-line))
+
+(add-hook 'sql-mode-hook 'my-sql-mode-hook)
+
+
 ;; elpa
 (when (>= emacs-major-version 24)
   (require 'package)
