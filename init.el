@@ -297,7 +297,7 @@
 (setq fci-rule-column 80)
 (setq fci-rule-width 1)
 (setq fci-rule-color "color-240")
-(setq fci-rule-character 10006)
+(setq fci-rule-character 9608)
 
 
 ;; multi-term
