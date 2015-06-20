@@ -172,6 +172,10 @@
 (add-hook 'sql-mode-hook 'my-sql-mode-hook)
 
 
+;;
+(global-set-key (kbd "C-u") 'upcase-word)
+
+
 ;; elpa
 (when (>= emacs-major-version 24)
   (require 'package)
