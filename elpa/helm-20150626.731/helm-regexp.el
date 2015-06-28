@@ -134,7 +134,7 @@ i.e Don't replace inside a word, regexp is surrounded with \\bregexp\\b."
   (let ((matches (match-data))
         (line    (buffer-substring s e)))
     (propertize
-     (cl-loop with ln = (format "%5d: %s" (line-number-at-pos s) line)
+     (cl-loop with ln = (format "%5d: %s" (1- (line-number-at-pos s)) line)
            for i from 0 to (1- (/ (length matches) 2))
            concat (format "\n         %s'%s'" (format "Group %d: " i)
                           (match-string i))
@@ -298,7 +298,6 @@ Same as `helm-moccur-goto-line' but go in new frame."
                        ("Goto line new frame" . helm-moccur-goto-line-of)))
    (persistent-action :initform 'helm-moccur-persistent-action)
    (persistent-help :initform "Go to line")
-   (recenter :initform t)
    (resume :initform 'helm-moccur-resume-fn)
    (candidate-number-limit :initform 9999)
    (mode-line :initform helm-moccur-mode-line)
@@ -394,9 +393,8 @@ Same as `helm-moccur-goto-line' but go in new frame."
         :input input
         :truncate-lines t))
 
-;;;###autoload
 (defun helm-moccur-run-save-buffer ()
-  "Run grep save results action from `helm-do-grep-1'."
+  "Run moccur save results action from `helm-moccur'."
   (interactive)
   (with-helm-alive-p
     (helm-quit-and-execute-action 'helm-moccur-save-results)))
@@ -464,7 +462,7 @@ Same as `helm-moccur-goto-line' but go in new frame."
       (let ((inhibit-read-only t))
         (erase-buffer)
         (insert "-*- mode: helm-moccur -*-\n\n"
-                (format "Moccur Results for `%s':\n\n" helm-pattern))
+                (format "Moccur Results for `%s':\n\n" helm-input))
         (save-excursion
           (insert (with-current-buffer helm-buffer
                     (goto-char (point-min)) (forward-line 1)
@@ -521,7 +519,7 @@ Special commands:
                           (insert
                            (propertize
                             (car (helm-moccur-filter-one-by-one line))
-                            'helm-real-value line)
+                            'helm-realvalue line)
                            "\n")))))
         (message "Reverting buffer done")))))
 

@@ -34,7 +34,13 @@
 (defmacro helm-with-gensyms (symbols &rest body)
   "Bind the SYMBOLS to fresh uninterned symbols and eval BODY."
   (declare (indent 1))
-  `(let ,(mapcar (lambda (s) `(,s (make-symbol (concat "--" (symbol-name ',s)))))
+  `(let ,(mapcar (lambda (s)
+                   ;; Use cl-gensym here instead of make-symbol
+                   ;; to ensure a symbol that have a live that go
+                   ;; beyond the live of its macro have different name.
+                   ;; i.e symbols created with `with-helm-temp-hook'
+                   ;; should have random names.
+                   `(,s (cl-gensym (symbol-name ',s))))
                  symbols)
      ,@body))
 
@@ -431,13 +437,13 @@ will reuse the same window scheme than the one of last session unless
 (defcustom helm-split-window-default-side 'below
   "The default side to display `helm-buffer'.
 Must be one acceptable arg for `split-window' SIDE,
-that is 'below, 'above, 'left or 'right.
+that is `below', `above', `left' or `right'.
 
-Other acceptable values are 'same which always display `helm-buffer'
-in current window and 'other that display `helm-buffer' below if only one
+Other acceptable values are `same' which always display `helm-buffer'
+in current window and `other' that display `helm-buffer' below if only one
 window or in `other-window-for-scrolling' if available.
 
-A nil value as same effect as 'below.
+A nil value as same effect as `below'.
 If `helm-full-frame' is non--nil, it take precedence on this.
 
 See also `helm-split-window-in-side-p' and `helm-always-two-windows' that
@@ -461,17 +467,25 @@ NOTE: this have no effect if `helm-split-window-preferred-function' is not
   "When non--nil helm will use two windows in this frame.
 That is one window to display `helm-buffer' and one to display
 `helm-current-buffer'.
+
 Note: this have no effect when `helm-split-window-in-side-p' is non--nil,
 or when `helm-split-window-default-side' is set to 'same.
+
 When `helm-autoresize-mode' is enabled, setting this to nil
-will have no effect until this mode will be disabled."
+will have no effect.
+
+Also when non-nil it overhides the effect of `helm-split-window-default-side'
+set to `other'."
   :group 'helm
   :type 'boolean)
 
 (defcustom helm-sources-using-default-as-input '(helm-source-imenu
+                                                 helm-source-imenu-all
                                                  helm-source-info-elisp
                                                  helm-source-etags-select
-                                                 helm-source-man-pages)
+                                                 helm-source-man-pages
+                                                 helm-source-occur
+                                                 helm-source-moccur)
   "List of helm sources that need to use `helm--maybe-use-default-as-input'.
 When a source is member of this list, default `thing-at-point'
 will be used as input."
@@ -495,12 +509,6 @@ you want this mode enabled definitely."
 
 (defcustom helm-prevent-escaping-from-minibuffer t
   "Prevent escaping from minibuffer during helm session."
-  :group 'helm
-  :type 'boolean)
-
-(defcustom helm-truncate-lines nil
-  "Truncate long lines when non--nil.
-See `truncate-lines'."
   :group 'helm
   :type 'boolean)
 
@@ -577,6 +585,12 @@ The default is to enable this by default, the user can toggle the current
 input method with `toggle-input-method'."
   :group 'helm
   :type 'boolean)
+
+(defcustom helm-echo-input-in-header-line nil
+  "Send current input in header-line."
+  :group 'helm
+  :type 'boolean)
+
 
 ;;; Faces
 ;;
@@ -690,9 +704,8 @@ can be set here with `helm-set-local-variable'.")
 
 (defvar helm-after-initialize-hook nil
   "Run after helm initialization.
-This hook run inside `helm-buffer' once created.
-Variables are initialized and the `helm-buffer' is created.
-But the `helm-buffer' has no contents.")
+This hook run after `helm-buffer' is created but not from `helm-buffer'
+so the hook have to specify in which buffer it should run.")
 
 (defvar helm-update-hook nil
   "Run after the helm buffer was updated according the new input pattern.
@@ -783,6 +796,23 @@ first arg is a string that will be used as name for candidates number,
 second arg any string to display in mode line.
 If nil, use default `mode-line-format'.")
 
+(defvar helm-minibuffer-set-up-hook nil
+  "Hook that run at initialization of minibuffer.
+Useful for modifying the settings of minibuffer in helm.
+
+Here an example to hide minibuffer when using
+`helm-echo-input-in-header-line':
+
+      (add-hook 'helm-minibuffer-set-up-hook
+                (lambda ()
+                  (when (with-helm-buffer helm-echo-input-in-header-line)
+                    (text-scale-set -12)
+                    (window--resize-mini-window
+                     (selected-window) -15))))
+
+Note that we check `helm-echo-input-in-header-line' value
+from `helm-buffer' which allow detecting possible local
+value of this var.")
 
 ;;; Internal Variables
 ;;
@@ -878,6 +908,10 @@ Use only in let-bindings.
 Use :default arg of `helm' as input to update display.
 Note that if also :input is specified as `helm' arg, it will take
 precedence on :default.")
+(defvar helm--temp-hooks nil
+  "Store temporary hooks added by `with-helm-temp-hook'.")
+(defvar helm-truncate-lines nil
+  "[Internal] Don't set this globally, it is used as a local var.")
 
 
 ;; Utility: logging
@@ -1105,13 +1139,15 @@ not `exit-minibuffer' or unwanted functions."
 (defmacro with-helm-temp-hook (hook &rest body)
   "Execute temporarily BODY as a function for HOOK."
   (declare (indent 1) (debug t))
-  (helm-with-gensyms (fun)
+  (helm-with-gensyms (helm--hook)
     `(progn
-       (defun ,fun ()
+       (defun ,helm--hook ()
          (unwind-protect
               (progn ,@body)
-           (remove-hook ,hook (quote ,fun))))
-       (add-hook ,hook (quote ,fun)))))
+           (remove-hook ,hook (quote ,helm--hook))
+           (fmakunbound (quote ,helm--hook))))
+       (push (cons ',helm--hook ,hook) helm--temp-hooks)
+       (add-hook ,hook (quote ,helm--hook)))))
 
 (defmacro with-helm-after-update-hook (&rest body)
   "Execute BODY at end of `helm-update'."
@@ -1258,9 +1294,9 @@ only when predicate helm-ff-candidates-lisp-p return non--nil:
                                 (helm-append-at-nth
                                  actions (quote ,new-action) ,index))
                                (t actions)))))
-    (when (symbolp actions)
+    (when (or (symbolp actions) (functionp actions))
       (helm-attrset 'action (list (cons "Default action" actions)) source))
-    (when (symbolp action-transformers)
+    (when (or (symbolp action-transformers) (functionp action-transformers))
       (setq action-transformers (list action-transformers)))
     (if test-only                       ; debug
         (delq nil (append (list transformer) action-transformers))
@@ -1392,7 +1428,19 @@ of \(action-display . function\)."
     (helm-aif (helm-attr 'action-transformer)
         (helm-composed-funcall-with-source
          (helm-get-current-source) it
-         (helm-attr 'action) (helm-get-selection))
+         (helm-attr 'action)
+         ;; Check if the first given transformer
+         ;; returns the same set of actions for each
+         ;; candidate in marked candidates.
+         ;; If so use the car of marked to determine
+         ;; the set of actions, otherwise use the selection.
+         (if (cl-loop with marked = (helm-marked-candidates)
+                      with act = (car (helm-mklist it))
+                      with acts = (funcall act nil (car marked))
+                      for c in marked
+                      always (equal (funcall act nil c) acts))
+             (car (helm-marked-candidates))
+             (helm-get-selection)))
       (helm-attr 'action))))
 
 (defun helm-get-current-source ()
@@ -1496,17 +1544,26 @@ Otherwise, return VALUE itself."
 
 (defun helm-set-local-variable (&rest args)
   "Bind each pair in ARGS locally to `helm-buffer'.
+
 Use this to set local vars before calling helm.
+
+When used from an init or update function
+(i.e when `helm-force-update' is running) the variables are set
+using `make-local-variable' within the `helm-buffer'.
+
 Usage: helm-set-local-variable ([VAR VALUE]...)
 Just like `setq' except that the vars are not set sequentially.
-IOW Don't use VALUE of previous VAR to eval the VALUE of next VAR.
-When helm is alive use `make-local-variable' as usual on `helm-buffer'.
+IOW Don't use VALUE of previous VAR to set the VALUE of next VAR.
 
 \(fn VAR VALUE ...)"
-  (setq helm--local-variables
-        (append (cl-loop for i on args by #'cddr
-                         collect (cons (car i) (cadr i)))
-                helm--local-variables)))
+  (if helm-force-updating-p
+      (with-helm-buffer
+        (cl-loop for i on args by #'cddr
+                 do (set (make-local-variable (car i)) (cadr i))))
+      (setq helm--local-variables
+            (append (cl-loop for i on args by #'cddr
+                             collect (cons (car i) (cadr i)))
+                    helm--local-variables))))
 
 (defun helm-make-actions (&rest args)
   "Build an alist with (NAME . ACTION) elements with each pairs in ARGS.
@@ -1682,6 +1739,27 @@ This is used in transformers to modify candidates list."
       str-or-sym
     (intern str-or-sym)))
 
+(defun helm-remove-if-not-match (regexp seq)
+  "Remove all elements of SEQ that don't match REGEXP."
+  (cl-loop for s in seq
+           for str = (cond ((symbolp s)
+                            (symbol-name s))
+                           ((consp s)
+                            (car s))
+                           (t s))
+           when (string-match-p regexp str)
+           collect s))
+
+(defun helm-remove-if-match (regexp seq)
+  "Remove all elements of SEQ that match REGEXP."
+  (cl-loop for s in seq
+           for str = (cond ((symbolp s)
+                            (symbol-name s))
+                           ((consp s)
+                            (car s))
+                           (t s))
+           unless (string-match-p regexp str)
+           collect s))
 
 ;; Core: entry point
 ;; `:allow-nest' is not in this list because it is treated before.
@@ -1853,6 +1931,7 @@ in source.
            unless (memq key helm-argument-keys)
            collect (cons sym value)))
 
+(defvar helm--prompt nil)
 ;;; Core: entry point helper
 (defun helm-internal (&optional
                         any-sources any-input
@@ -1876,6 +1955,7 @@ ANY-KEYMAP ANY-DEFAULT ANY-HISTORY See `helm'."
   (helm-log "any-keymap = %S" any-keymap)
   (helm-log "any-default = %S" any-default)
   (helm-log "any-history = %S" any-history)
+  (setq helm--prompt (or any-prompt "pattern: "))
   (let ((non-essential t)
         (input-method-verbose-flag helm-input-method-verbose-flag)
         (old--cua cua-mode)
@@ -1902,6 +1982,7 @@ ANY-KEYMAP ANY-DEFAULT ANY-HISTORY See `helm'."
                  (when helm-prevent-escaping-from-minibuffer
                    (helm--remap-mouse-mode 1)) ; Disable mouse bindings.
                  (add-hook 'post-command-hook 'helm--maybe-update-keymap)
+                 (add-hook 'post-command-hook 'helm--update-header-line)
                  (helm-log "show prompt")
                  (unwind-protect
                       (helm-read-pattern-maybe
@@ -1916,6 +1997,7 @@ ANY-KEYMAP ANY-DEFAULT ANY-HISTORY See `helm'."
             (helm-log (concat "[End session (quit)] " (make-string 34 ?-)))
             nil))
       (remove-hook 'post-command-hook 'helm--maybe-update-keymap)
+      (remove-hook 'post-command-hook 'helm--update-header-line)
       (if (fboundp 'advice-add)
           (progn
             (advice-remove 'tramp-read-passwd
@@ -2053,14 +2135,18 @@ Argument SAVE-OR-RESTORE is one of save or restore."
      (helm-log "Save position at %S" (cons (point) (window-start)))
      (setq helm-current-position (cons (point) (window-start))))
     (restore
-     (helm-log "Restore position at  %S in buffer %s"
-               helm-current-position
-               (buffer-name (current-buffer)))
-     (goto-char (car helm-current-position))
-     ;; Fix this position with the NOFORCE arg of `set-window-start'
-     ;; otherwise, if there is some other buffer than `helm-current-buffer'
-     ;; one, position will be lost.
-     (set-window-start (selected-window) (cdr helm-current-position) t))))
+     ;; Maybe `helm-current-buffer' have been deleted
+     ;; during helm session so check if it is here
+     ;; otherwise position in underlaying buffer will be lost.
+     (when (get-buffer-window helm-current-buffer 'visible)
+       (helm-log "Restore position at  %S in buffer %s"
+                 helm-current-position
+                 (buffer-name (current-buffer)))
+       (goto-char (car helm-current-position))
+       ;; Fix this position with the NOFORCE arg of `set-window-start'
+       ;; otherwise, if there is some other buffer than `helm-current-buffer'
+       ;; one, position will be lost.
+       (set-window-start (selected-window) (cdr helm-current-position) t)))))
 
 
 (defun helm-frame-or-window-configuration (save-or-restore)
@@ -2163,7 +2249,12 @@ It uses `switch-to-buffer' or `pop-to-buffer' depending of value of
           (and (eq helm-split-window-default-side 'same)
                (one-window-p t)))
       (progn (delete-other-windows) (switch-to-buffer buffer))
-    (when (and (or helm-always-two-windows helm-autoresize-mode)
+    (when (and (or helm-always-two-windows helm-autoresize-mode
+                   (and (not helm-split-window-in-side-p)
+                        (eq (save-selected-window
+                              (funcall helm-split-window-preferred-function
+                                       (selected-window)))
+                            (get-buffer-window helm-current-buffer))))
                (not (eq helm-split-window-default-side 'same))
                (not (minibufferp helm-current-buffer))
                (not helm-split-window-in-side-p))
@@ -2341,6 +2432,10 @@ Please don't use it.
   :keymap (and helm-alive-p helm-map)
   (unless helm-alive-p (setq helm--minor-mode nil)))
 
+(defun helm--reset-default-pattern ()
+  (setq helm-pattern "")
+  (setq helm--maybe-use-default-as-input nil))
+
 (defun helm-read-pattern-maybe (any-prompt any-input
                                 any-preselect any-resume any-keymap
                                 any-default any-history)
@@ -2351,7 +2446,7 @@ For ANY-PRESELECT ANY-RESUME ANY-KEYMAP ANY-DEFAULT ANY-HISTORY, See `helm'."
            ;; or contain non--candidate lines (e.g grep exit status)
            (helm-get-current-source))
       (helm-mark-current-line t)
-    (helm-update any-preselect))
+      (helm-update any-preselect))
   (with-current-buffer (helm-buffer-get)
     (let* ((src        (helm-get-current-source))
            (src-keymap (assoc-default 'keymap src))
@@ -2361,18 +2456,13 @@ For ANY-PRESELECT ANY-RESUME ANY-KEYMAP ANY-DEFAULT ANY-HISTORY, See `helm'."
            (timer nil)
            blink-matching-paren
            (first-src (car helm-sources))
+           (first-src-val (if (symbolp first-src)
+                              (symbol-value first-src)
+                              first-src))
+           (source-process-p (or (assq 'candidates-process src)
+                                 (assq 'candidates-process first-src-val)))
            (source-delayed-p (or (assq 'delayed src)
-                                 (assq 'delayed (if (symbolp first-src)
-                                                    (symbol-value first-src)
-                                                  first-src)))))
-      ;; Startup with the first keymap found either in current source
-      ;; or helm arg, otherwise use global value of `helm-map'.
-      ;; This map will be used as a `minibuffer-local-map'.
-      ;; Maybe it will be overriden when changing source
-      ;; by `helm--maybe-update-keymap'.
-      ;; Note that helm-map have been made buffer-local
-      ;; in `helm-create-helm-buffer'.
-      (setq helm-map (or src-keymap any-keymap helm-map))
+                                 (assq 'delayed first-src-val))))
       (helm-log "helm-get-candidate-number => %S"
                 (helm-get-candidate-number))
       (helm-log "helm-execute-action-at-once-if-one = %S"
@@ -2392,13 +2482,19 @@ For ANY-PRESELECT ANY-RESUME ANY-KEYMAP ANY-DEFAULT ANY-HISTORY, See `helm'."
       ;; Don't force update with an empty pattern.
       ;; Reset also `helm--maybe-use-default-as-input' as this checking
       ;; happen only on startup.
-      (when (and helm--maybe-use-default-as-input (not source-delayed-p))
-        ;; Store value of default temporarily here waiting next update
-        ;; to allow action like helm-moccur-action matching pattern
+      (when helm--maybe-use-default-as-input
+        ;; Store value of `default' temporarily here waiting next update
+        ;; to allow actions like helm-moccur-action matching pattern
         ;; at the place it jump to.
         (setq helm-input helm-pattern)
-        (setq helm-pattern "")
-        (setq helm--maybe-use-default-as-input nil)
+        (if (or source-delayed-p source-process-p)
+            ;; Reset pattern to next update.
+            (with-helm-after-update-hook
+              (helm--reset-default-pattern))
+            ;; Reset pattern right now.
+            (helm--reset-default-pattern))
+        ;; Ensure force-update when no candidates
+        ;; when we start with an empty pattern.
         (and (helm-empty-buffer-p)
              (null helm-quit-if-no-candidate)
              (helm-force-update)))
@@ -2407,14 +2503,14 @@ For ANY-PRESELECT ANY-RESUME ANY-KEYMAP ANY-DEFAULT ANY-HISTORY, See `helm'."
       (cond ((and helm-execute-action-at-once-if-one
                   (not source-delayed-p)
                   (= (helm-get-candidate-number) 1))
-             (ignore)) ; Don't enter the minibuffer loop.
+             (ignore))              ; Don't enter the minibuffer loop.
             ((and helm-quit-if-no-candidate
                   (not source-delayed-p)
                   (= (helm-get-candidate-number) 0))
              (setq helm-quit t)
              (and (functionp helm-quit-if-no-candidate)
                   (funcall helm-quit-if-no-candidate)))
-            (t ; Enter now minibuffer and wait for input.
+            (t              ; Enter now minibuffer and wait for input.
              (let ((tap (or any-default
                             (with-helm-current-buffer
                               (thing-at-point 'symbol)))))
@@ -2423,25 +2519,32 @@ For ANY-PRESELECT ANY-RESUME ANY-KEYMAP ANY-DEFAULT ANY-HISTORY, See `helm'."
                         #'(lambda ()
                             ;; Start minor-mode with global value of helm-map.
                             (helm--minor-mode 1)
-                            ;; Now overhide the global value of helm-map with
-                            ;; the local one.
-                            (setq minor-mode-overriding-map-alist
-                                  `((helm--minor-mode
-                                     . ,(with-helm-buffer helm-map))))
-                            (setq timer (run-with-idle-timer
-                                         (max helm-input-idle-delay 0.001) 'repeat
-                                         #'(lambda ()
-                                             ;; Stop updating when in persistent action
-                                             ;; or when `helm-suspend-update-flag' is
-                                             ;; non--nil.
-                                             (unless (or helm-in-persistent-action
-                                                         helm-suspend-update-flag)
-                                               (save-selected-window
-                                                 (helm-check-minibuffer-input)
-                                                 (helm-print-error-messages)))))))
+                            ;; Now overhide the global value of `helm-map' with
+                            ;; the local one which is in this order:
+                            ;; - The keymap of current source.
+                            ;; - The value passed in ANY-KEYMAP
+                            ;;   which will become buffer local.
+                            ;; - Or fallback to the global value of helm-map.
+                            (helm--maybe-update-keymap
+                             (or src-keymap any-keymap helm-map))
+                            (helm-log-run-hook 'helm-minibuffer-set-up-hook)
+                            (setq timer
+                                  (run-with-idle-timer
+                                   (max helm-input-idle-delay 0.001) 'repeat
+                                   #'(lambda ()
+                                       ;; Stop updating in persistent action
+                                       ;; or when `helm-suspend-update-flag'
+                                       ;; is non--nil.
+                                       (unless (or helm-in-persistent-action
+                                                   helm-suspend-update-flag)
+                                         (save-selected-window
+                                           (helm-check-minibuffer-input)
+                                           (helm-print-error-messages))))))
+                            (helm--update-header-line)) ; minibuffer has already been filled here
                       (read-from-minibuffer (or any-prompt "pattern: ")
                                             any-input helm-map
-                                            nil hist tap helm-inherit-input-method))
+                                            nil hist tap
+                                            helm-inherit-input-method))
                  (when timer (cancel-timer timer) (setq timer nil)))))))))
 
 (defun helm-exit-or-quit-maybe ()
@@ -2516,13 +2619,13 @@ This can be useful for e.g writing quietly a complex regexp."
     (setq helm--reading-passwd-or-string nil)
     (setq helm-suspend-update-flag nil)))
 
-(defun helm--maybe-update-keymap ()
+(defun helm--maybe-update-keymap (&optional map)
   "Handle differents keymaps in multiples sources.
 
 It will override `helm-map' with the local map of current source.
 If no map is found in current source do nothing (keep previous map)."
   (with-helm-buffer
-    (helm-aif (assoc-default 'keymap (helm-get-current-source))
+    (helm-aif (or map (assoc-default 'keymap (helm-get-current-source)))
         ;; We need the timer to leave enough time
         ;; to helm to setup its buffer when changing source
         ;; from a recursive minibuffer.
@@ -2568,6 +2671,12 @@ WARNING: Do not use this mode yourself, it is internal to helm."
     ;; Be sure we call this from helm-buffer.
     (helm-funcall-foreach 'cleanup))
   (helm-kill-async-processes)
+  ;; Remove the temporary hooks added
+  ;; by `with-helm-temp-hook' that
+  ;; may not have been consumed.
+  (when helm--temp-hooks
+    (cl-loop for (fn . hook) in helm--temp-hooks
+             do (set hook (delete fn (symbol-value hook)))))
   ;; When running helm from a dedicated frame
   ;; with no minibuffer, helm will run in the main frame
   ;; which have a minibuffer, so be sure to disable
@@ -2613,10 +2722,7 @@ WARNING: Do not use this mode yourself, it is internal to helm."
   ;; `helm--maybe-use-default-as-input' and ignore this.
   ;; This happen only when source is `delayed'.
   (when helm--maybe-use-default-as-input ; nil when non--delayed.
-    (setq input helm-pattern)
-    (with-helm-after-update-hook (setq helm-pattern ""))
-    (setq helm--maybe-use-default-as-input nil))
-  ;; In delayed sources `helm-pattern' have not been resat yet.
+    (setq input helm-pattern))
   (unless (equal input helm-pattern)
     (setq helm-pattern input)
     (unless (helm-action-window)
@@ -2760,7 +2866,8 @@ ARGS is (cand1 cand2 ...) or ((disp1 . real1) (disp2 . real2) ...)
        (if (and (listp it)
                 (not (functionp it))) ;; Don't treat lambda's as list.
            (cl-loop for f in it
-                 do (setq ,candidate (funcall f ,candidate)))
+                 do (setq ,candidate (funcall f ,candidate))
+                 finally return ,candidate)
          (setq ,candidate (funcall it ,candidate)))))
 
 (defun helm--initialize-one-by-one-candidates (candidates source)
@@ -2768,9 +2875,8 @@ ARGS is (cand1 cand2 ...) or ((disp1 . real1) (disp2 . real2) ...)
 Return CANDIDATES when pattern is empty."
   (helm-aif (and (string= helm-pattern "")
                  (assoc-default 'filter-one-by-one source))
-      (cl-loop for cand in candidates
-            do (helm--maybe-process-filter-one-by-one-candidate cand source)
-            collect cand)
+      (cl-loop for cand in candidates collect
+               (helm--maybe-process-filter-one-by-one-candidate cand source))
     candidates))
 
 (defun helm-process-filtered-candidate-transformer-maybe
@@ -3592,29 +3698,30 @@ Coerce source with coerce function."
   "Select an action for the currently selected candidate.
 If action buffer is selected, back to the helm buffer."
   (interactive)
-  (helm-log-run-hook 'helm-select-action-hook)
-  (setq helm-saved-selection (helm-get-selection))
-  (with-selected-frame (with-helm-window (selected-frame))
-    (prog1
-        (cond ((get-buffer-window helm-action-buffer 'visible)
-               (set-window-buffer (get-buffer-window helm-action-buffer)
-                                  helm-buffer)
-               (kill-buffer helm-action-buffer)
-               (helm-display-mode-line (helm-get-current-source))
-               (helm-set-pattern helm-input 'noupdate))
-              (helm-saved-selection
-               (setq helm-saved-current-source (helm-get-current-source))
-               (let ((actions (helm-get-actions-from-current-source)))
-                 (if (functionp actions)
-                     (message "Sole action: %s" actions)
-                     (helm-show-action-buffer actions)
-                     ;; Be sure the minibuffer is entirely deleted (#907).
-                     (helm--delete-minibuffer-contents-from "")
-                     ;; Make `helm-pattern' differs from the previous value.
-                     (setq helm-pattern 'dummy)
-                     (helm-check-minibuffer-input))))
-              (t (message "No Actions available")))
-      (run-hooks 'helm-window-configuration-hook))))
+  (let ((src (helm-get-current-source)))
+    (helm-log-run-hook 'helm-select-action-hook)
+    (setq helm-saved-selection (helm-get-selection))
+    (with-selected-frame (with-helm-window (selected-frame))
+      (prog1
+          (cond ((get-buffer-window helm-action-buffer 'visible)
+                 (set-window-buffer (get-buffer-window helm-action-buffer)
+                                    helm-buffer)
+                 (kill-buffer helm-action-buffer)
+                 (helm-set-pattern helm-input 'noupdate))
+                (helm-saved-selection
+                 (setq helm-saved-current-source src)
+                 (let ((actions (helm-get-actions-from-current-source)))
+                   (if (functionp actions)
+                       (message "Sole action: %s" actions)
+                       (helm-show-action-buffer actions)
+                       ;; Be sure the minibuffer is entirely deleted (#907).
+                       (helm--delete-minibuffer-contents-from "")
+                       ;; Make `helm-pattern' differs from the previous value.
+                       (setq helm-pattern 'dummy)
+                       (helm-check-minibuffer-input))))
+                (t (message "No Actions available")))
+        (helm-display-mode-line src)
+        (run-hooks 'helm-window-configuration-hook)))))
 
 (defun helm-show-action-buffer (actions)
   (with-current-buffer (get-buffer-create helm-action-buffer)
@@ -3705,15 +3812,42 @@ Possible value of DIRECTION are 'next or 'previous."
                                            helm-mode-line-string)))
         (setq mode-line-format (default-value 'mode-line-format)))
     ;; Setup header-line.
-    (when helm-display-header-line
-      (let* ((hlstr (helm-interpret-value
-                     (and (listp source)
-                          (assoc-default 'header-line source))
-                     source))
-             (hlend (make-string (max 0 (- (window-width) (length hlstr))) ? )))
-        (setq header-line-format
-              (propertize (concat " " hlstr hlend) 'face 'helm-header)))))
+    (cond (helm-echo-input-in-header-line
+           (setq force t)
+           (helm--set-header-line))
+          (helm-display-header-line
+           (let* ((hlstr (helm-interpret-value
+                          (and (listp source)
+                               (assoc-default 'header-line source))
+                          source))
+                  (hlend (make-string (max 0 (- (window-width) (length hlstr))) ? )))
+             (setq header-line-format
+                   (propertize (concat " " hlstr hlend) 'face 'helm-header))))))
   (when force (force-mode-line-update)))
+
+(defun helm--set-header-line (&optional update)
+  (with-selected-window (minibuffer-window)
+    (let* ((beg (save-excursion (vertical-motion 0) (point))) 
+           (end (save-excursion (end-of-visual-line) (point)))
+           ;; The visual line where the cursor is.
+           (cont (buffer-substring beg end))
+           (pos (- (point) beg)))
+      (with-helm-window
+        (setq header-line-format
+              (concat (propertize " " 'display '(space :width left-fringe)) ; [1]
+                      cont
+                      " " ; Make it possible to show cursor after last character.
+                      ))
+        (put-text-property
+         (1+ pos) (+ 2 pos) ; Increment pos to handle the space before prompt [1].
+         'face 'cursor header-line-format)
+        (when update (force-mode-line-update))))))
+
+(defun helm--update-header-line ()
+  ;; This should be used in `post-command-hook',
+  ;; nowhere else.
+  (when (with-helm-buffer helm-echo-input-in-header-line)
+    (helm--set-header-line t)))
 
 (defun helm-show-candidate-number (&optional name)
   "Used to display candidate number in mode-line.
@@ -4195,6 +4329,16 @@ before the candidate we want to preselect."
           (helm-pos-header-line-p)
           (eobp)))))
 
+(defun helm-beginning-of-source-p (&optional at-point)
+  "Return non--nil if we are at bob or beginning of source."
+  (save-excursion
+    (if (and (helm-pos-multiline-p) (null at-point))
+        (null (helm-get-previous-candidate-separator-pos))
+      (forward-line (if at-point 0 -1))
+      (or (eq (point-at-bol) (point-at-eol))
+          (helm-pos-header-line-p)
+          (bobp)))))
+
 (defun helm-edit-current-selection-internal (func)
   (with-helm-window
     (forward-line 0)
@@ -4410,6 +4554,7 @@ To customize `helm-candidates-in-buffer' behavior, use `search',
        (clrhash helm-cib-hash)
        (cl-dolist (searcher search-fns)
          (goto-char start-point)
+         (forward-line 1) ; >>>[1]
          (setq newmatches nil)
          (cl-loop with pos-lst
                   with item-count = 0
@@ -4464,13 +4609,22 @@ When using fuzzy matching and negation (i.e \"!\"), this function is always call
                      do (forward-line 1))))
 
 (defun helm--search-from-candidate-buffer-1 (search-fn)
-  ;; Previously we were adding a newline at bob and at eol
-  ;; and removing these newlines afterward, it seems it is no more
-  ;; needed, thus when searching for empty line ("^$")
-  ;; it was adding the first line as a matched line
-  ;; which is wrong.
+  ;; We are adding a newline at bob and at eol
+  ;; and removing these newlines afterward.
+  ;; This is a bad hack that should be removed.
+  ;; To avoid matching the empty line at first line
+  ;; when searching with e.g occur and "^$" just
+  ;; forward-line before searching (See >>>[1] above).
+  (goto-char (point-min))
+  (insert "\n")
+  (goto-char (point-max))
+  (insert "\n")
   (unwind-protect
        (funcall search-fn)
+    (goto-char (point-min))
+    (delete-char 1)
+    (goto-char (1- (point-max)))
+    (delete-char 1)
     (set-buffer-modified-p nil)))
 
 (defun helm-candidate-buffer (&optional create-or-buffer)

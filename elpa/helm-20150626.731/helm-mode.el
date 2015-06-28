@@ -100,6 +100,11 @@ Affect among others `completion-at-point', `completing-read-multiple'."
   :group 'helm-mode
   :type 'boolean)
 
+(defcustom helm-mode-fuzzy-match nil
+  "Enable fuzzy matching in `helm-mode'."
+  :group 'helm-mode
+  :type 'boolean)
+
 
 (defvar helm-comp-read-map
   (let ((map (make-sparse-keymap)))
@@ -164,54 +169,57 @@ e.g
 See docstring of `all-completions' for more info.
 
 If COLLECTION is an `obarray', a TEST should be needed. See `obarray'."
-  
-  (let ((cands
-         (cond ((vectorp collection)
-                (all-completions "" collection test))
-               ((and (symbolp collection) (boundp collection)
-                     ;; Issue #324 history is let-bounded and given
-                     ;; quoted as hist argument of completing-read.
-                     ;; See example in `rcirc-browse-url'.
-                     (symbolp (symbol-value collection)))
-                nil)
-               ;; When collection is a symbol, most of the time
-               ;; it should be a symbol used as a minibuffer-history.
-               ;; The value of this symbol in this case return a list
-               ;; of string which maybe are converted later as symbol
-               ;; in special cases.
-               ;; we treat here commandp as a special case as it return t
-               ;; also with a string unless its last arg is provided.
-               ;; Also, the history collections generally collect their
-               ;; elements as string, so intern them to call predicate.
-               ((and (symbolp collection) (boundp collection) test)
-                (let ((predicate `(lambda (elm)
-                                    (condition-case err
-                                        (if (eq (quote ,test) 'commandp)
-                                            (funcall (quote ,test) (intern elm))
-                                          (funcall (quote ,test) elm))
-                                      (wrong-type-argument
-                                       (funcall (quote ,test) (intern elm)))))))
-                  (all-completions "" (symbol-value collection) predicate)))
-               ((and (symbolp collection) (boundp collection))
-                (all-completions "" (symbol-value collection)))
-               ;; Normally file completion should not be handled here,
-               ;; but special cases like `find-file-at-point' do it.
-               ;; Handle here specially such cases.
-               ((and (functionp collection) minibuffer-completing-file-name)
-                (cl-loop for f in (funcall collection helm-pattern test t)
-                         unless (member f '("./" "../"))
-                         if (string-match ffap-url-regexp helm-pattern)
-                         collect f
-                         else
-                         collect (concat (file-name-as-directory
-                                          (helm-basedir helm-pattern)) f)))
-               ((functionp collection)
-                (funcall collection "" test t))
-               ((and alistp test)
-                (cl-loop for i in collection when (funcall test i) collect i))
-               (alistp collection)
-               (t (all-completions "" collection test)))))
-    (if sort-fn (sort cands sort-fn) cands)))
+  ;; Ensure COLLECTION is computed from `helm-current-buffer'
+  ;; because some functions used as COLLECTION work
+  ;; only in the context of current-buffer (Issue #1030) .
+  (with-helm-current-buffer
+    (let ((cands
+           (cond ((vectorp collection)
+                  (all-completions "" collection test))
+                 ((and (symbolp collection) (boundp collection)
+                       ;; Issue #324 history is let-bounded and given
+                       ;; quoted as hist argument of completing-read.
+                       ;; See example in `rcirc-browse-url'.
+                       (symbolp (symbol-value collection)))
+                  nil)
+                 ;; When collection is a symbol, most of the time
+                 ;; it should be a symbol used as a minibuffer-history.
+                 ;; The value of this symbol in this case return a list
+                 ;; of string which maybe are converted later as symbol
+                 ;; in special cases.
+                 ;; we treat here commandp as a special case as it return t
+                 ;; also with a string unless its last arg is provided.
+                 ;; Also, the history collections generally collect their
+                 ;; elements as string, so intern them to call predicate.
+                 ((and (symbolp collection) (boundp collection) test)
+                  (let ((predicate `(lambda (elm)
+                                      (condition-case err
+                                          (if (eq (quote ,test) 'commandp)
+                                              (funcall (quote ,test) (intern elm))
+                                              (funcall (quote ,test) elm))
+                                        (wrong-type-argument
+                                         (funcall (quote ,test) (intern elm)))))))
+                    (all-completions "" (symbol-value collection) predicate)))
+                 ((and (symbolp collection) (boundp collection))
+                  (all-completions "" (symbol-value collection)))
+                 ;; Normally file completion should not be handled here,
+                 ;; but special cases like `find-file-at-point' do it.
+                 ;; Handle here specially such cases.
+                 ((and (functionp collection) minibuffer-completing-file-name)
+                  (cl-loop for f in (funcall collection helm-pattern test t)
+                           unless (member f '("./" "../"))
+                           if (string-match ffap-url-regexp helm-pattern)
+                           collect f
+                           else
+                           collect (concat (file-name-as-directory
+                                            (helm-basedir helm-pattern)) f)))
+                 ((functionp collection)
+                  (funcall collection "" test t))
+                 ((and alistp test)
+                  (cl-loop for i in collection when (funcall test i) collect i))
+                 (alistp collection)
+                 (t (all-completions "" collection test)))))
+      (if sort-fn (sort cands sort-fn) cands))))
 
 (defun helm-cr-default-transformer (candidates _source)
   "Default filter candidate function for `helm-comp-read'."
@@ -532,6 +540,7 @@ that use `helm-comp-read' See `helm-M-x' for example."
                                                  (not (keywordp x))))
                                           (or (car-safe default) default)))
                :filtered-candidate-transformer 'helm-apropos-default-sort-fn
+               :fuzzy-match helm-mode-fuzzy-match
                :persistent-action 'helm-lisp-completion-persistent-action
                :persistent-help "Show brief doc in mode-line")
     :prompt prompt
@@ -584,6 +593,7 @@ It should be used when candidate list don't need to rebuild dynamically."
                            1 0)
      :candidates-in-buffer cands-in-buffer
      :exec-when-only-one exec-when-only-one
+     :fuzzy helm-mode-fuzzy-match
      :buffer buffer
      ;; If DEF is not provided, fallback to empty string
      ;; to avoid `thing-at-point' to be appended on top of list

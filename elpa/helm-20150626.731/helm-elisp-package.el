@@ -66,6 +66,24 @@
                           (package-desc-name id)
                         (car id)))))
 
+(defun helm-el-package-visit-homepage (candidate)
+  (let* ((id (get-text-property 0 'tabulated-list-id candidate))
+         (pkg (if (fboundp 'package-desc-name) (package-desc-name id)
+                (car id)))
+         (desc (cadr (assoc pkg package-archive-contents)))
+         (extras (package-desc-extras desc))
+         (url (and (listp extras) (cdr-safe (assoc :url extras)))))
+    (if (stringp url)
+        (browse-url url)
+      (message "Package %s has no homepage"
+               (propertize (symbol-name pkg)
+                           'face 'font-lock-keyword-face)))))
+
+(defun helm-el-run-visit-homepage ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action 'helm-el-package-visit-homepage)))
+
 (defun helm-el-package-install-1 (pkg-list)
   (cl-loop with mkd = pkg-list
         for p in mkd
@@ -95,6 +113,11 @@
 
 (defun helm-el-package-install (_candidate)
   (helm-el-package-install-1 (helm-marked-candidates)))
+
+(defun helm-el-run-package-install ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action 'helm-el-package-install)))
 
 (defun helm-el-package-uninstall-1 (pkg-list)
   (cl-loop with mkd = pkg-list
@@ -138,6 +161,11 @@
 
 (defun helm-el-package-uninstall (_candidate)
   (helm-el-package-uninstall-1 (helm-marked-candidates)))
+
+(defun helm-el-run-package-uninstall ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action 'helm-el-package-uninstall)))
 
 (defun helm-el-package-menu--find-upgrades ()
   (cl-loop for entry in helm-el-package--tabulated-list
@@ -184,6 +212,11 @@
             if (member (symbol-name (package-desc-name pkg)) pkgs)
             collect p)))
 
+(defun helm-el-run-package-upgrade ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action 'helm-el-package-upgrade)))
+
 (defun helm-el-package-upgrade-all ()
   (if helm-el-package--upgrades
       (with-helm-display-marked-candidates
@@ -192,6 +225,11 @@
         (when (y-or-n-p "Upgrade all packages? ")
           (helm-el-package-upgrade-1 helm-el-package--tabulated-list)))
       (message "No packages to upgrade actually!")))
+
+(defun helm-el-run-package-upgrade-all ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action 'helm-el-package-upgrade-all)))
 
 (defun helm-el-package-upgrade-all-action (_candidate)
   (helm-el-package-upgrade-all))
@@ -249,9 +287,16 @@
 (defvar helm-el-package-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map helm-map)
-    (define-key map (kbd "M-I") 'helm-el-package-show-installed)
-    (define-key map (kbd "M-U") 'helm-el-package-show-upgrade)
-    (define-key map (kbd "M-A") 'helm-el-package-show-all)
+    (define-key map (kbd "M-I")   'helm-el-package-show-installed)
+    (define-key map (kbd "M-O")   'helm-el-package-show-uninstalled)
+    (define-key map (kbd "M-U")   'helm-el-package-show-upgrade)
+    (define-key map (kbd "M-A")   'helm-el-package-show-all)
+    (define-key map (kbd "C-c i") 'helm-el-run-package-install)
+    (define-key map (kbd "C-c r") 'helm-el-run-package-reinstall)
+    (define-key map (kbd "C-c d") 'helm-el-run-package-uninstall)
+    (define-key map (kbd "C-c u") 'helm-el-run-package-upgrade)
+    (define-key map (kbd "C-c U") 'helm-el-run-package-upgrade-all)
+    (define-key map (kbd "C-c @") 'helm-el-run-visit-homepage)
     (define-key map (kbd "C-c ?") 'helm-el-package-help)
     map))
 
@@ -271,16 +316,17 @@
                       actions)))
         (cond ((cdr (assq (package-desc-name pkg-desc)
                           helm-el-package--upgrades))
-               (append '(("Upgrade package" . helm-el-package-upgrade)) acts))
+               (append '(("Upgrade package(s)" . helm-el-package-upgrade)) acts))
               ((package-installed-p (package-desc-name pkg-desc))
-               (append acts '(("Reinstall package" . helm-el-package-reinstall)
-                              ("Uninstall" . helm-el-package-uninstall))))
-              (t (append acts '(("Install" . helm-el-package-install))))))))
+               (append acts '(("Reinstall package(s)" . helm-el-package-reinstall)
+                              ("Uninstall package(s)" . helm-el-package-uninstall))))
+              (t (append acts '(("Install packages(s)" . helm-el-package-install))))))))
    (mode-line :initform helm-el-package-mode-line)
    (keymap :initform helm-el-package-map)
    (update :initform 'helm-el-package--update)
    (candidate-number-limit :initform 9999)
-   (action :initform '(("Describe" . helm-el-package-describe)))))
+   (action :initform '(("Describe package" . helm-el-package-describe)
+                       ("Visit homepage" . helm-el-package-visit-homepage)))))
 
 (defun helm-el-package--update ()
   (setq helm-el-package--initialized-p nil))
@@ -294,8 +340,14 @@
                   (package-delete pkg-desc)
                   (package-install name))))
 
+(defun helm-el-run-package-reinstall ()
+  (interactive)
+  (with-helm-alive-p
+    (helm-quit-and-execute-action 'helm-el-package-reinstall)))
+
 ;;;###autoload
 (defun helm-list-elisp-packages (arg)
+  "Preconfigured helm for listing and handling emacs packages."
   (interactive "P")
   (when arg (setq helm-el-package--initialized-p nil))
   (unless helm-source-list-el-package
@@ -306,6 +358,8 @@
 
 ;;;###autoload
 (defun helm-list-elisp-packages-no-fetch ()
+  "Preconfigured helm for emacs packages.
+Same as `helm-list-elisp-packages' but don't fetch packages on remote."
   (interactive)
   (let ((helm-el-package--initialized-p t))
     (helm-list-elisp-packages nil)))

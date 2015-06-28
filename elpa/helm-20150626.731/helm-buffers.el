@@ -75,6 +75,19 @@ Only buffer names are fuzzy matched when this is enabled,
   "Ignore checking for `file-exists-p' on remote files."
   :group 'helm-buffers
   :type 'boolean)
+
+(defcustom helm-buffers-truncate-lines t
+  "Truncate lines in `helm-buffers-list' when non--nil."
+  :group 'helm-buffers
+  :type 'boolean)
+
+(defcustom helm-mini-default-sources '(helm-source-buffers-list
+                                       helm-source-recentf
+                                       helm-source-buffer-not-found)
+  "Default sources list used in `helm-mini'."
+  :group 'helm-misc
+  :type '(repeat (choice symbol)))
+
 
 ;;; Faces
 ;;
@@ -162,6 +175,21 @@ Only buffer names are fuzzy matched when this is enabled,
 
 (defvar helm-buffers-list-cache nil)
 (defvar helm-buffer-max-len-mode nil)
+
+(defun helm-buffers-list--init ()
+  ;; Issue #51 Create the list before `helm-buffer' creation.
+  (setq helm-buffers-list-cache (funcall (helm-attr 'buffer-list)))
+  (let ((result (cl-loop for b in helm-buffers-list-cache
+                         maximize (length b) into len-buf
+                         maximize (length (with-current-buffer b
+                                            (symbol-name major-mode)))
+                         into len-mode
+                         finally return (cons len-buf len-mode))))
+    (unless (default-value 'helm-buffer-max-length)
+      (helm-set-local-variable 'helm-buffer-max-length (car result)))
+    (unless (default-value 'helm-buffer-max-len-mode)
+      (helm-set-local-variable 'helm-buffer-max-len-mode (cdr result)))))
+
 (defclass helm-source-buffers (helm-source-sync helm-type-buffer)
   ((buffer-list
     :initarg :buffer-list
@@ -169,24 +197,9 @@ Only buffer names are fuzzy matched when this is enabled,
     :custom function
     :documentation
     "  A function with no arguments to create buffer list.")
-   (init :initform (lambda ()
-                     ;; Issue #51 Create the list before `helm-buffer' creation.
-                     (setq helm-buffers-list-cache (funcall (helm-attr 'buffer-list)))
-                     (let ((result (cl-loop for b in helm-buffers-list-cache
-                                            maximize (length b) into len-buf
-                                            maximize (length (with-current-buffer b
-                                                               (symbol-name major-mode)))
-                                            into len-mode
-                                            finally return (cons len-buf len-mode))))
-                       (unless helm-buffer-max-length
-                         (setq helm-buffer-max-length (car result)))
-                       (unless helm-buffer-max-len-mode
-                         ;; If a new buffer is longer that this value
-                         ;; this value will be updated
-                         (setq helm-buffer-max-len-mode (cdr result))))))
+   (init :initform 'helm-buffers-list--init)
    (candidates :initform helm-buffers-list-cache)
    (matchplugin :initform nil)
-   ;(nohighlight :initform t)
    (match :initform 'helm-buffers-match-function)
    (persistent-action :initform 'helm-buffers-list-persistent-action)
    (resume :initform (lambda ()
@@ -320,9 +333,8 @@ See `ido-make-buffer-list' for more infos."
          (helm-buffer--show-details
           name name-prefix file-name size mode dir
           'helm-buffer-saved-out 'helm-buffer-process nil details 'modout))
-        ;; A new buffer file not already saved on disk.=>indianred2
-        ((and file-name
-              (not (verify-visited-file-modtime buf)))
+        ;; A new buffer file not already saved on disk (or a deleted file) .=>indianred2
+        ((and file-name (not (file-exists-p file-name)))
          (helm-buffer--show-details
           name name-prefix file-name size mode dir
           'helm-buffer-not-saved 'helm-buffer-process nil details 'notsaved))
@@ -682,16 +694,20 @@ If REGEXP-FLAG is given use `query-replace-regexp'."
 
 (defun helm-buffers-persistent-kill-1 (buffer)
   "Persistent action to kill buffer."
-  (with-current-buffer (get-buffer buffer)
-    (if (and (buffer-modified-p)
-             (buffer-file-name (current-buffer)))
-        (progn
-          (save-buffer)
-          (kill-buffer buffer))
-      (kill-buffer buffer)))
-  (helm-delete-current-selection)
-  (with-helm-temp-hook 'helm-after-persistent-action-hook
-    (helm-force-update (regexp-quote (helm-get-selection nil t)))))
+  (if (eql (get-buffer buffer) (get-buffer helm-current-buffer))
+      (progn
+        (message "Can't kill `helm-current-buffer' without quitting session")
+        (sit-for 1))
+      (with-current-buffer (get-buffer buffer)
+        (if (and (buffer-modified-p)
+                 (buffer-file-name (current-buffer)))
+            (progn
+              (save-buffer)
+              (kill-buffer buffer))
+            (kill-buffer buffer)))
+      (helm-delete-current-selection)
+      (with-helm-temp-hook 'helm-after-persistent-action-hook
+        (helm-force-update (regexp-quote (helm-get-selection nil t))))))
 
 (defun helm-buffers--quote-truncated-buffer (buffer)
   (let ((bufname (and (bufferp buffer)
@@ -841,7 +857,20 @@ displayed with the `file-name-shadow' face if available."
                    helm-source-buffer-not-found)
         :buffer "*helm buffers*"
         :keymap helm-buffer-map
-        :truncate-lines t))
+        :truncate-lines helm-buffers-truncate-lines))
+
+;;;###autoload
+(defun helm-mini ()
+  "Preconfigured `helm' lightweight version \(buffer -> recentf\)."
+  (interactive)
+  (require 'helm-files)
+  (unless helm-source-buffers-list
+    (setq helm-source-buffers-list
+          (helm-make-source "Buffers" 'helm-source-buffers)))
+  (helm :sources helm-mini-default-sources
+        :buffer "*helm mini*"
+        :ff-transformer-show-only-basename nil
+        :truncate-lines helm-buffers-truncate-lines))
 
 (provide 'helm-buffers)
 
