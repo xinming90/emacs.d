@@ -12,13 +12,15 @@
 (setq-default indent-tabs-mode nil)
 
 
-;; split window
-(global-set-key (kbd "C-x v") 'split-window-right)
-(global-set-key (kbd "C-x s") 'split-window-below)
-;; http://stackoverflow.com/questions/6464738/how-can-i-switch-focus-after-buffer-split-in-emacs
-(defadvice split-window (after move-point-to-new-window activate)
-  "Moves the point to the newly created window after splitting."
-  (other-window 1))
+(global-set-key (kbd "C-x v") (lambda ()
+                                (interactive)
+                                (split-window-right)
+                                (other-window 1)))
+
+(global-set-key (kbd "C-x s") (lambda ()
+                                (interactive)
+                                (split-window-below)
+                                (other-window 1)))
 
 
 ;; ido mode
