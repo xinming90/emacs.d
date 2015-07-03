@@ -111,6 +111,17 @@
 (add-hook 'python-mode-hook 'my-python-mode-hook)
 
 
+;; php
+(defun php-compile ()
+  "Use compile to run php programs"
+  (interactive)
+  (compile (concat "php " (buffer-name))))
+
+(add-hook 'php-mode-hook (lambda ()
+                           (define-key php-mode-map (kbd "C-c C-c") 'php-compile)))
+
+
+
 ;; c/c++
 (add-hook 'c-mode-hook 'auto-complete-mode)
 (add-hook 'c++-mode-hook 'auto-complete-mode)
