@@ -241,11 +241,12 @@
 (add-hook 'python-mode-hook
           '(lambda()
              (local-set-key (kbd "C-[ [ ,") 'jedi:goto-definition)
-             (local-set-key (kbd "C-[ [ .") 'jedi:goto-definition-pop-marker)))
+             (local-set-key (kbd "C-[ [ .") 'jedi:goto-definition-pop-marker)
+             (local-set-key (kbd "C-x p") 'pylint)))
 
 
 ;; flycheck
-(add-hook 'python-mode-hook 'flycheck-mode)
+;; (add-hook 'python-mode-hook 'flycheck-mode)
 
 
 ;; window-numbering
