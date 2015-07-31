@@ -142,8 +142,16 @@
   (gdb-display-disassembly-buffer)
   (select-window-1))
 (global-set-key (kbd "C-x r") 'gud-run)
+(global-set-key [f8] 'gud-cont)
 (global-set-key [f9] 'gud-next)
 (global-set-key [f10] 'gud-step)
+
+
+;; http://stackoverflow.com/questions/3102988/how-to-set-emacs-gdb-so-that-it-shows-recent-command-on-arrow-up
+(eval-after-load "gud"
+  '(progn
+     (define-key gud-mode-map (kbd "C-p") 'comint-previous-input)
+     (define-key gud-mode-map (kbd "C-n") 'comint-next-input)))
 
 
 ;; org-mode
@@ -246,7 +254,7 @@
 
 
 ;; flycheck
-;; (add-hook 'python-mode-hook 'flycheck-mode)
+(add-hook 'python-mode-hook 'flycheck-mode)
 
 
 ;; window-numbering
