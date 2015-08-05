@@ -111,6 +111,7 @@
 (add-hook 'python-mode-hook 'my-python-mode-hook)
 
 
+
 ;; php
 (defun php-compile ()
   "Use compile to run php programs"
@@ -119,6 +120,16 @@
 
 (add-hook 'php-mode-hook (lambda ()
                            (define-key php-mode-map (kbd "C-c C-c") 'php-compile)))
+
+
+
+;; go
+(defun go-compile ()
+  "Use compile to run go programs"
+  (interactive)
+  (compile (concat "go run " (buffer-name))))
+(add-hook 'go-mode-hook (lambda ()
+                          (define-key go-mode-map (kbd "C-c C-c") 'go-compile)))
 
 
 
