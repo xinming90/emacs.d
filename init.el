@@ -131,6 +131,13 @@
 (add-hook 'go-mode-hook (lambda ()
                           (define-key go-mode-map (kbd "C-c C-c") 'go-compile)))
 
+;; for gdb           https://lincolnloop.com/blog/introduction-go-debugging-gdb/
+(defun go-build ()
+  "Use compile to run go programs"
+  (interactive)
+  (compile (concat "go build -gcflags '-N -l' " (buffer-name))))
+
+
 
 
 ;; c/c++
