@@ -124,6 +124,13 @@
 
 
 ;; go
+;; https://coderwall.com/p/kpp6ta/nice-emacs-go-mode-indenting-and-autoformat
+(add-hook 'go-mode-hook (lambda ()
+            ;; (add-hook 'before-save-hook 'gofmt-before-save)
+                          (auto-complete-mode)
+                          (setq tab-width 4)
+                          (setq indent-tabs-mode t)))
+
 (defun go-compile ()
   "Use compile to run go programs"
   (interactive)
@@ -391,3 +398,7 @@
 ;; helm-projectile
 (global-set-key (kbd "C-x C-f") 'ido-find-file)
 (global-set-key (kbd "C-x f") 'helm-projectile-find-file-dwim)
+
+
+
+
