@@ -159,13 +159,13 @@
 (setq gdb-many-windows t)
 (global-set-key (kbd "C-x g") 'gdb)
 
-(defadvice gdb-setup-windows (around setup-more-gdb-windows activate)
-  ad-do-it
-  (select-window-4)
-  (split-window-below)
-  (select-window-4)
-  (gdb-display-disassembly-buffer)
-  (select-window-1))
+;; (defadvice gdb-setup-windows (around setup-more-gdb-windows activate)
+;;   ad-do-it
+;;   (select-window-4)
+;;   (split-window-below)
+;;   (select-window-4)
+;;   (gdb-display-disassembly-buffer)
+;;   (select-window-1))
 (global-set-key (kbd "C-x r") 'gud-run)
 (global-set-key [f8] 'gud-cont)
 (global-set-key [f9] 'gud-next)
