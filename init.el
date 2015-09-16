@@ -123,7 +123,7 @@
 
 
 
-;; go
+;; golang
 ;; https://coderwall.com/p/kpp6ta/nice-emacs-go-mode-indenting-and-autoformat
 (add-hook 'go-mode-hook (lambda ()
             ;; (add-hook 'before-save-hook 'gofmt-before-save)
@@ -133,6 +133,11 @@
                           (local-set-key (kbd "C-[ [ ,") 'godef-jump)
                           (local-set-key (kbd "C-[ [ .") 'godef-jump-back)
                           ))
+
+;; https://godoc.org/golang.org/x/tools/cmd/goimports
+(setq gofmt-command "goimports")
+(add-hook 'before-save-hook 'gofmt-before-save)
+
 
 ;; ;; http://txt.arboreus.com/2013/02/21/jedi.el-jump-to-definition-and-back.html
 ;; (add-hook 'python-mode-hook
