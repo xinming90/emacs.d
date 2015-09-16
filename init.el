@@ -22,9 +22,9 @@
                                 (split-window-below)
                                 (other-window 1)))
 
-
 ;; ido mode
 (ido-mode)
+
 
 
 ;; paren
@@ -126,7 +126,7 @@
 ;; golang
 ;; https://coderwall.com/p/kpp6ta/nice-emacs-go-mode-indenting-and-autoformat
 (add-hook 'go-mode-hook (lambda ()
-            ;; (add-hook 'before-save-hook 'gofmt-before-save)
+                          (add-hook 'before-save-hook 'gofmt-before-save)
                           (auto-complete-mode)
                           (setq tab-width 4)
                           (setq indent-tabs-mode t)
@@ -136,7 +136,6 @@
 
 ;; https://godoc.org/golang.org/x/tools/cmd/goimports
 (setq gofmt-command "goimports")
-(add-hook 'before-save-hook 'gofmt-before-save)
 
 
 ;; ;; http://txt.arboreus.com/2013/02/21/jedi.el-jump-to-definition-and-back.html
