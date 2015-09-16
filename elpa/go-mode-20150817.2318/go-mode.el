@@ -1416,6 +1416,9 @@ description at POINT."
           (message "%s" (mapconcat #'identity description "\n"))))
     (file-error (message "Could not run godef binary"))))
 
+
+(defvar godef--marker-list nil)
+
 (defun godef-jump (point &optional other-window)
   "Jump to the definition of the expression at POINT."
   (interactive "d")
@@ -1423,10 +1426,25 @@ description at POINT."
       (let ((file (car (godef--call point))))
         (if (not (godef--successful-p file))
             (message "%s" (godef--error file))
-          (push-mark)
+          ;; (push-mark)
+          (push (point-marker) godef--marker-list)
           (ring-insert find-tag-marker-ring (point-marker))
           (godef--find-file-line-column file other-window)))
     (file-error (message "Could not run godef binary"))))
+
+;; https://gist.github.com/syohex/5883383#file-support-godef-jump-back-patch
+(defun godef-jump-back ()
+  "Pop back to where `godef-jump' was last invoked"
+  (interactive)
+  (when (null godef--marker-list)
+    (error "Marker list is empty. Can't pop back"))
+  (let ((marker (pop godef--marker-list)))
+    (switch-to-buffer (or (marker-buffer marker)
+                          (error "Buffer has been deleted")))
+    (goto-char (marker-position marker))
+    ;; Cleanup the marker so as to avoid them piling up.
+    (set-marker marker nil nil)))
+
 
 (defun godef-jump-other-window (point)
   (interactive "d")

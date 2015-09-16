@@ -129,7 +129,17 @@
             ;; (add-hook 'before-save-hook 'gofmt-before-save)
                           (auto-complete-mode)
                           (setq tab-width 4)
-                          (setq indent-tabs-mode t)))
+                          (setq indent-tabs-mode t)
+                          (local-set-key (kbd "C-[ [ ,") 'godef-jump)
+                          (local-set-key (kbd "C-[ [ .") 'godef-jump-back)
+                          ))
+
+;; ;; http://txt.arboreus.com/2013/02/21/jedi.el-jump-to-definition-and-back.html
+;; (add-hook 'python-mode-hook
+;;           '(lambda()
+;;              (local-set-key (kbd "C-[ [ ,") 'jedi:goto-definition)
+;;              (local-set-key (kbd "C-[ [ .") 'jedi:goto-definition-pop-marker)
+;;              (local-set-key (kbd "C-x p") 'pylint)))
 
 (defun go-compile ()
   "Use compile to run go programs"
