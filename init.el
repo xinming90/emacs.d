@@ -128,6 +128,7 @@
 (add-hook 'go-mode-hook (lambda ()
                           (add-hook 'before-save-hook 'gofmt-before-save)
                           (auto-complete-mode)
+                          (flycheck-mode)
                           (setq tab-width 4)
                           (setq indent-tabs-mode t)
                           (local-set-key (kbd "C-[ [ ,") 'godef-jump)
