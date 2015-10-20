@@ -163,8 +163,8 @@
 
 
 ;; c/c++
-(add-hook 'c-mode-hook 'auto-complete-mode)
-(add-hook 'c++-mode-hook 'auto-complete-mode)
+(add-hook 'c-mode-hook 'company-mode)
+(add-hook 'c++-mode-hook 'company-mode)
 
 ;; c 
 (setq-default c-basic-offset 4)
