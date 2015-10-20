@@ -1,4 +1,4 @@
-;;; helm-autoloads.el --- automatically extracted autoloads
+;;; irony-autoloads.el --- automatically extracted autoloads
 ;;
 ;;; Code:
 (add-to-list 'load-path (or (file-name-directory #$) (car load-path)))
@@ -8,4 +8,4 @@
 ;; no-byte-compile: t
 ;; no-update-autoloads: t
 ;; End:
-;;; helm-autoloads.el ends here
+;;; irony-autoloads.el ends here

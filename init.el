@@ -163,8 +163,19 @@
 
 
 ;; c/c++
-(add-hook 'c-mode-hook 'company-mode)
-(add-hook 'c++-mode-hook 'company-mode)
+;; irony-mode
+;; apt-get install libclang-3.6-dev
+;; M-x irony-install-server
+(defun my-c-mode-hook()
+  (company-mode)
+  (irony-mode)
+  (flycheck-mode))
+
+(add-hook 'c-mode-hook 'my-c-mode-hook)
+(add-hook 'c++-mode-hook 'my-c-mode-hook)
+
+(eval-after-load 'company
+  '(add-to-list 'company-backends 'company-irony))
 
 ;; c 
 (setq-default c-basic-offset 4)
@@ -413,7 +424,3 @@
 ;; helm-projectile
 (global-set-key (kbd "C-x C-f") 'ido-find-file)
 (global-set-key (kbd "C-x f") 'helm-projectile-find-file-dwim)
-
-
-
-
