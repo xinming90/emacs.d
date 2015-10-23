@@ -169,7 +169,8 @@
 (defun my-c-mode-hook()
   (company-mode)
   (irony-mode)
-  (flycheck-mode))
+  (flycheck-mode)
+  (rtags-diagnostics))
 
 (add-hook 'c-mode-hook 'my-c-mode-hook)
 (add-hook 'c++-mode-hook 'my-c-mode-hook)
