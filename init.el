@@ -180,6 +180,8 @@
 ;; c 
 (setq-default c-basic-offset 4)
 
+;; rtags
+;; (rtags-follow-symbol-at-point)
 
 ;; gdb
 (setq gdb-many-windows t)
@@ -348,6 +350,7 @@
 
 
 ;; Enable helm-gtags-mode
+
 (add-hook 'c-mode-hook 'helm-gtags-mode)
 (add-hook 'c++-mode-hook 'helm-gtags-mode)
 (add-hook 'asm-mode-hook 'helm-gtags-mode)
@@ -357,12 +360,17 @@
 ; http://superuser.com/questions/731427/how-do-i-send-ctrl-in-iterm2
 (eval-after-load "helm-gtags"
   '(progn
-     (define-key helm-gtags-mode-map (kbd "C-[ [ ,") 'helm-gtags-find-tag-from-here)
-     (define-key helm-gtags-mode-map (kbd "C-[ [ .") 'helm-gtags-previous-history)))
+     (define-key helm-gtags-mode-map (kbd "C-[ [ ,") 'rtags-find-symbol-at-point)
+     (define-key helm-gtags-mode-map (kbd "C-[ [ .") 'rtags-location-stack-back)
+     (define-key helm-gtags-mode-map (kbd "C-[ [ [") 'helm-gtags-find-tag-from-here)
+     (define-key helm-gtags-mode-map (kbd "C-[ [ ]") 'helm-gtags-previous-history)))
 
 ;; auto-update gtags
 (setq helm-gtags-auto-update t)
 (setq helm-gtags-update-interval-second nil)
+
+
+;; rtags
 
 
 ;; auto-highlight-symbol
