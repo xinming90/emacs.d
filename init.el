@@ -362,6 +362,7 @@
   '(progn
      (define-key helm-gtags-mode-map (kbd "C-[ [ ,") 'rtags-find-symbol-at-point)
      (define-key helm-gtags-mode-map (kbd "C-[ [ .") 'rtags-location-stack-back)
+     (define-key helm-gtags-mode-map (kbd "C-[ [ '") 'rtags-find-references-at-point)
      (define-key helm-gtags-mode-map (kbd "C-[ [ [") 'helm-gtags-find-tag-from-here)
      (define-key helm-gtags-mode-map (kbd "C-[ [ ]") 'helm-gtags-previous-history)))
 
