@@ -111,6 +111,13 @@
 (add-hook 'python-mode-hook 'my-python-mode-hook)
 
 
+;; ruby
+(defun ruby-compile ()
+  (interactive)
+  (compile (concat "ruby " (buffer-name))))
+(add-hook 'ruby-mode-hook (lambda()
+                            (define-key ruby-mode-map (kbd "C-c C-c") 'ruby-compile)))
+
 
 ;; php
 (defun php-compile ()
