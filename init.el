@@ -168,6 +168,10 @@
 
 
 
+;; company
+(setq company-idle-delay 0)
+
+
 
 ;; c/c++
 ;; irony-mode
