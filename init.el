@@ -189,6 +189,9 @@
 (eval-after-load 'company
   '(add-to-list 'company-backends 'company-irony))
 
+(eval-after-load 'company
+  '(add-to-list 'company-backends 'company-c-headers))
+
 ;; c 
 (setq-default c-basic-offset 4)
 
