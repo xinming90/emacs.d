@@ -182,7 +182,7 @@
   (irony-mode)
   (flycheck-mode)
   (rtags-diagnostics)
-  (define-key c-mode-map (kbd "C-m") 'helm-man-woman))
+  (define-key c-mode-map (kbd "C-x m") 'helm-man-woman))
 
 (add-hook 'c-mode-hook 'my-c-mode-hook)
 (add-hook 'c++-mode-hook 'my-c-mode-hook)
