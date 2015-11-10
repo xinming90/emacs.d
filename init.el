@@ -181,7 +181,8 @@
   (company-mode)
   (irony-mode)
   (flycheck-mode)
-  (rtags-diagnostics))
+  (rtags-diagnostics)
+  (define-key c-mode-map (kbd "C-m") 'helm-man-woman))
 
 (add-hook 'c-mode-hook 'my-c-mode-hook)
 (add-hook 'c++-mode-hook 'my-c-mode-hook)
@@ -381,9 +382,10 @@
      (define-key helm-gtags-mode-map (kbd "C-[ [ [") 'helm-gtags-find-tag-from-here)
      (define-key helm-gtags-mode-map (kbd "C-[ [ ]") 'helm-gtags-previous-history)))
 
+
 ;; auto-update gtags
-(setq helm-gtags-auto-update t)
-(setq helm-gtags-update-interval-second nil)
+;; (setq helm-gtags-auto-update t)
+;; (setq helm-gtags-update-interval-second nil)
 
 
 ;; rtags
@@ -424,7 +426,7 @@
 (add-hook 'web-mode-hook 'my-web-mode-hook)
 
 
-;; heml-ag
+;; helm-ag
 (global-set-key (kbd "C-x a g") 'helm-do-ag-project-root)
 (global-set-key (kbd "C-x a f") 'helm-ag-this-file)
 
