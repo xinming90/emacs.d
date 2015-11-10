@@ -102,11 +102,15 @@
 
 (defun my-python-mode-hook ()
   (hs-minor-mode)
+  (define-key python-mode-map (kbd "C-c C-c") 'python-compile))
+
+
+(add-hook 'hs-minor-mode-hook (lambda ()
   (define-key hs-minor-mode-map (kbd "C-c h") 'hs-hide-all)
   (define-key hs-minor-mode-map (kbd "C-c s") 'hs-show-all)
   (define-key hs-minor-mode-map (kbd "C-[ [ -") 'hs-hide-block)
-  (define-key hs-minor-mode-map (kbd "C-[ [ +") 'hs-show-block)
-  (define-key python-mode-map (kbd "C-c C-c") 'python-compile))
+  (define-key hs-minor-mode-map (kbd "C-[ [ +") 'hs-show-block)))
+
 
 (add-hook 'python-mode-hook 'my-python-mode-hook)
 
@@ -181,6 +185,7 @@
   (company-mode)
   (irony-mode)
   (flycheck-mode)
+  (hs-minor-mode)
   (rtags-diagnostics)
   (define-key c-mode-map (kbd "C-x m") 'helm-man-woman))
 
