@@ -176,6 +176,9 @@
 (setq company-idle-delay 0)
 
 
+;; helm
+(global-set-key (kbd "M-x") 'helm-M-x)
+
 
 ;; c/c++
 ;; irony-mode
@@ -300,12 +303,12 @@
 (setq powerline-utf-8-separator-right 9664)
 
 
-;; smex
-(smex-initialize)
-(global-set-key (kbd "M-x") 'smex)
-(global-set-key (kbd "M-X") 'smex-major-mode-commands)
-;; This is your old M-x.
-(global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
+;; ;; smex
+;; (smex-initialize)
+;; (global-set-key (kbd "M-x") 'smex)
+;; (global-set-key (kbd "M-X") 'smex-major-mode-commands)
+;; ;; This is your old M-x.
+;; (global-set-key (kbd "C-c C-c M-x") 'execute-extended-command)
 
 
 ;; magit
