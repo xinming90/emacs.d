@@ -191,7 +191,7 @@
   (hs-minor-mode)
   (rtags-diagnostics)
   (define-key c-mode-map (kbd "C-x m") 'helm-man-woman)
-  (define-key c-mode-map (kbd "C-x l") 'clang-format-region))
+  (define-key c-mode-map (kbd "C-x l") 'clang-format-buffer))
 
 (add-hook 'c-mode-hook 'my-c-mode-hook)
 (add-hook 'c++-mode-hook 'my-c-mode-hook)
