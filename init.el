@@ -179,6 +179,7 @@
 ;; helm
 (global-set-key (kbd "M-x") 'smex)
 
+;;
 
 ;; c/c++
 ;; irony-mode
@@ -190,6 +191,8 @@
   (flycheck-mode)
   (hs-minor-mode)
   (rtags-diagnostics)
+  (setq flycheck-gcc-language-standard "c99")
+  (add-to-list 'flycheck-disabled-checkers 'c/c++-clang)
   (define-key c-mode-map (kbd "C-x m") 'helm-man-woman)
   (define-key c-mode-map (kbd "C-x l") 'clang-format-buffer))
 
