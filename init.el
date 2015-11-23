@@ -92,6 +92,17 @@
 (global-set-key (kbd "C-[ [ ;") 'comment-dwim-line)
 
 
+
+;; flycheck
+(add-hook 'flycheck-mode-hook
+          '(lambda()
+             (add-to-list 'flycheck-disabled-checkers 'c/c++-gcc)
+             (add-to-list 'flycheck-clang-include-path "/home/vagrant/github/corvus/deps")))
+
+
+
+
+
 ;; python
 
 ;; python-compile  https://www.cs.unc.edu/~gb/blog/2008/03/15/running-python-from-within-emacs/
@@ -179,19 +190,19 @@
 ;; helm
 (global-set-key (kbd "M-x") 'smex)
 
-;;
+
 
 ;; c/c++
 ;; irony-mode
 ;; apt-get install libclang-3.6-dev
 ;; M-x irony-install-server
+
 (defun my-c-mode-hook()
   (company-mode)
   (irony-mode)
   (flycheck-mode)
   (hs-minor-mode)
   (rtags-diagnostics)
-  (add-to-list 'flycheck-disabled-checkers 'c/c++-gcc)
   (define-key c-mode-map (kbd "C-x m") 'helm-man-woman)
   (define-key c-mode-map (kbd "C-x l") 'clang-format-buffer))
 
