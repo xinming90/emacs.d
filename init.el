@@ -12,6 +12,10 @@
 (setq-default indent-tabs-mode nil)
 
 
+;; backup
+(setq backup-directory-alist `(("." . "~/.emacs.d/auto-save-list")))
+
+
 (global-set-key (kbd "C-x v") (lambda ()
                                 (interactive)
                                 (split-window-right)
