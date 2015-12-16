@@ -16,6 +16,10 @@
 (setq backup-directory-alist `(("." . "~/.emacs.d/auto-save-list")))
 
 
+;; auto revert
+(global-auto-revert-mode t)
+
+
 (global-set-key (kbd "C-x v") (lambda ()
                                 (interactive)
                                 (split-window-right)
