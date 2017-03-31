@@ -386,7 +386,7 @@
  '(ecb-options-version "2.40")
  '(package-selected-packages
    (quote
-    (zenburn-theme yaml-mode window-numbering web-mode thrift smex rust-mode rtags pylint powerline php-mode multi-term markdown-mode magit llvm-mode jedi helm-projectile helm-gtags helm-ag go-mode gitconfig-mode git-gutter flycheck-irony flx-ido fill-column-indicator ecb dockerfile-mode cython-mode company-irony company-c-headers cmake-mode clang-format auto-highlight-symbol anzu))))
+    (nginx-mode zenburn-theme yaml-mode window-numbering web-mode thrift smex rust-mode rtags pylint powerline php-mode multi-term markdown-mode magit llvm-mode jedi helm-projectile helm-gtags helm-ag go-mode gitconfig-mode git-gutter flycheck-irony flx-ido fill-column-indicator ecb dockerfile-mode cython-mode company-irony company-c-headers cmake-mode clang-format auto-highlight-symbol anzu))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
