@@ -123,6 +123,9 @@
   (hs-minor-mode)
   (define-key python-mode-map (kbd "C-c C-c") 'python-compile))
 
+;;
+(global-set-key (kbd "C-c C-d") 'helm-pydoc)
+
 
 (add-hook 'hs-minor-mode-hook (lambda ()
   (define-key hs-minor-mode-map (kbd "C-c h") 'hs-hide-all)
@@ -386,7 +389,7 @@
  '(ecb-options-version "2.40")
  '(package-selected-packages
    (quote
-    (nginx-mode zenburn-theme yaml-mode window-numbering web-mode thrift smex rust-mode rtags pylint powerline php-mode multi-term markdown-mode magit llvm-mode jedi helm-projectile helm-gtags helm-ag go-mode gitconfig-mode git-gutter flycheck-irony flx-ido fill-column-indicator ecb dockerfile-mode cython-mode company-irony company-c-headers cmake-mode clang-format auto-highlight-symbol anzu))))
+    (helm-pydoc pyvenv nginx-mode zenburn-theme yaml-mode window-numbering web-mode thrift smex rust-mode rtags pylint powerline php-mode multi-term markdown-mode magit llvm-mode jedi helm-projectile helm-gtags helm-ag go-mode gitconfig-mode git-gutter flycheck-irony flx-ido fill-column-indicator ecb dockerfile-mode cython-mode company-irony company-c-headers cmake-mode clang-format auto-highlight-symbol anzu))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
