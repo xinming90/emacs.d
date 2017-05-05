@@ -125,6 +125,8 @@
 
 ;;
 (global-set-key (kbd "C-c C-d") 'helm-pydoc)
+(global-set-key (kbd "C-o") 'capitalize-word)
+
 
 
 (add-hook 'hs-minor-mode-hook (lambda ()
@@ -389,7 +391,7 @@
  '(ecb-options-version "2.40")
  '(package-selected-packages
    (quote
-    (helm-pydoc pyvenv nginx-mode zenburn-theme yaml-mode window-numbering web-mode thrift smex rust-mode rtags pylint powerline php-mode multi-term markdown-mode magit llvm-mode jedi helm-projectile helm-gtags helm-ag go-mode gitconfig-mode git-gutter flycheck-irony flx-ido fill-column-indicator ecb dockerfile-mode cython-mode company-irony company-c-headers cmake-mode clang-format auto-highlight-symbol anzu))))
+    (undo-tree s helm-pydoc pyvenv nginx-mode zenburn-theme yaml-mode window-numbering web-mode thrift smex rust-mode rtags pylint powerline php-mode multi-term markdown-mode magit llvm-mode jedi helm-projectile helm-gtags helm-ag go-mode gitconfig-mode git-gutter flycheck-irony flx-ido fill-column-indicator ecb dockerfile-mode cython-mode company-irony company-c-headers cmake-mode clang-format auto-highlight-symbol anzu))))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -435,6 +437,9 @@
 ; for gevent
 (add-to-list 'auto-mode-alist '("\\.ppyx\\'" . cython-mode))
 
+
+;; undo-tree
+(global-undo-tree-mode)
 
 ;; fill-column-indicator
 (add-hook 'python-mode-hook 'fci-mode)
